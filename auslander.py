@@ -184,11 +184,20 @@ class Requestor:
         )
 
     async def send_message(self, chat_id, text):
-        try:
-            await self.application.bot.send_message(chat_id, text)
-        except error.Forbidden:
-            self.chat_ids.remove(chat_id)
-            logger.info(f"Removed chat_id {chat_id} from chat_ids.json")
+        times = 3
+        for time in range(times):
+            if time:
+                print("times:", time + 1)
+            try:
+                await self.application.bot.send_message(chat_id, text)
+                return
+            except error.Forbidden:
+                self.chat_ids.remove(chat_id)
+                logger.info(f"Removed chat_id {chat_id} from chat_ids.json")
+                return
+            except Exception as exc:
+                pass
+        logger.info(f"Error sending to user: {exc}")
 
     async def send_message_to_admins(self, text):
         for id in self.admin_ids.items:
