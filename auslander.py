@@ -184,6 +184,7 @@ class Requestor:
 
     async def send_message(self, chat_id, text):
         times = 3
+        exc = None
         for time in range(times):
             if time:
                 print("times:", time + 1)
@@ -194,8 +195,8 @@ class Requestor:
                 self.chat_ids.remove(chat_id)
                 logger.info(f"Removed chat_id {chat_id} from chat_ids.json")
                 return
-            except Exception as exc:
-                pass
+            except Exception as e:
+                exc = e
         logger.info(f"Error sending to user: {exc}")
 
     async def send_message_to_admins(self, text):
@@ -282,8 +283,13 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
 
 
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"Update {update} caused error {context}")
+
+
 if __name__ == "__main__":
     application = ApplicationBuilder().token(token).build()
+    application.add_error_handler(error_handler)
     REQUESTOR.application = application
     start_handler = CommandHandler("start", start)
     last_handler = CommandHandler("last", get_last)
