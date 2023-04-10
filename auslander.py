@@ -149,7 +149,6 @@ class Requestor:
             return State.PENDING
         except requests.exceptions.ConnectionError:
             logger.info("Connection Error!")
-            self.state = State.PENDING
             return State.PENDING
         except requests.exceptions.RequestException as e:
             logger.info(f"Request Error: {e}")
