@@ -3,3 +3,7 @@ chat_ids.json
 response.html
 
 .venv
+
+# Python
+*.py[cod]
+*$py.class
