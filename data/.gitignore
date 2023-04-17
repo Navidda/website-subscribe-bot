@@ -1,5 +1,4 @@
-admin_ids.json
-chat_ids.json
+*.json
 response.html
 
 nohup.out.bak

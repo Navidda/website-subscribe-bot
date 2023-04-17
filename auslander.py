@@ -69,7 +69,8 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await context.bot.send_document(update.effective_chat.id, f)
     elif update.message.text.startswith("cookie"):
         session = update.message.text.split()[1]
-        config.cookies["TVWebSession"] = session
+        config.cookies.data["TVWebSession"] = session
+        config.cookies.save()
         await context.bot.send_message(
             chat_id=update.effective_chat.id, text=f"Cookie set! {session}"
         )

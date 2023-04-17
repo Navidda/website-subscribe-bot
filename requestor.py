@@ -63,7 +63,7 @@ class Requestor:
             self.response = requests.get(
                 "https://termine.staedteregion-aachen.de/auslaenderamt/suggest",
                 params=config.params,
-                cookies=config.cookies,
+                cookies=config.cookies.data,
                 headers=config.headers,
                 timeout=config.PERIOD / 2.0,
             )
