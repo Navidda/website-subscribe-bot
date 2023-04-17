@@ -2,6 +2,7 @@ import json
 
 
 class PersistedList:
+    """A list that persists to a file"""
     def __init__(self, filename):
         self.filename = filename
         self.items = []

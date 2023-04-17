@@ -38,9 +38,9 @@ class Requestor:
         self.last_request: datetime = None
         self.send_message_callback: Coroutine = None
         self.application: Application[BT, CCT, UD, CD, BD, JQ] = None
-        self.chat_ids = PersistedList("chat_ids.json")
+        self.chat_ids = PersistedList("data/chat_ids.json")
         self.chat_ids.load()
-        self.admin_ids = PersistedList("admin_ids.json")
+        self.admin_ids = PersistedList("data/admin_ids.json")
         self.admin_ids.load()
         self.status_msgs: List[Message] = []
 
@@ -80,7 +80,7 @@ class Requestor:
             self.logger.info(f"Unknown Error: {e}")
             return State.PENDING
 
-        with open("response.html", "w") as f:
+        with open("data/response.html", "w") as f:
             f.write(self.response.text)
 
         no_appointment_text = "Kein freier Termin verfügbar"
