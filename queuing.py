@@ -75,11 +75,13 @@ class QueueManager:
         await self.send_message_callback(chat_id, "You are now subscribed.")
 
     async def process_queue(self):
-        while len(self.serving_list.items) < self.max_queue_size:
-            if len(self.waiting_list.items) > 0:
-                self.serving_list.append(self.waiting_list.pop())
-                await self.notify_serving()
-                await self.notify_queue_position()
+        while (
+            len(self.serving_list.items) < self.max_queue_size
+            and len(self.waiting_list.items) > 0
+        ):
+            self.serving_list.append(self.waiting_list.pop())
+            await self.notify_serving()
+            await self.notify_queue_position()
         kicked_one = self.try_kick()
         if kicked_one:
             await self.send_message_callback(
