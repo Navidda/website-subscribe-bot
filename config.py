@@ -1,25 +1,23 @@
-# token = "1988829719:AAHDD4JkFjaO6-UZYHZ_Jd1B-9ahD1TGoqk"
 import logging
+import os
 
 from utils import PersistableDict
 
 
-token = "5455024630:AAG89D8OmG758ZFTxIma_qtRAqRivKwvTNM"
+TOKEN = os.getenv("BOT_TOKEN")
 
-default_cookies = {
+DEFAULT_COOKIES = {
     "cookie_accept": "1",
     "TVWebSession": "k08eg9ntk7pcki3hd293b0ucj0",
 }
 
-cookies = PersistableDict("data/cookies.json", default_cookies)
+COOKIES = PersistableDict("data/cookies.json", DEFAULT_COOKIES)
 
-headers = {
+HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8,fa;q=0.7",
     "Cache-Control": "max-age=0",
     "Connection": "keep-alive",
-    # Requests sorts cookies= alphabetically
-    # 'Cookie': 'cookie_accept=1; TVWebSession=r99l43fm0tds17nr1tqtl4v7f1',
     "DNT": "1",
     "If-Modified-Since": "Sat, 29 Oct 2022 18:45:23 GMT",
     "Sec-Fetch-Dest": "document",
@@ -33,7 +31,7 @@ headers = {
     "sec-ch-ua-platform": '"Windows"',
 }
 
-params = {
+PARAMS = {
     "cnc-191": "1",
     "loc": "28",
 }

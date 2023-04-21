@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from enum import Enum, auto
 from http import HTTPStatus
-from typing import Coroutine, List
+from typing import List
 
 import pytz
 import requests
@@ -12,6 +12,7 @@ from telegram.ext import Application
 from telegram.ext._utils.types import BD, BT, CCT, CD, JQ, UD
 
 import config
+from queuing import QueueManager
 from utils import PersistedList
 
 
@@ -36,24 +37,15 @@ class Requestor:
         self.response = requests.Response
         self.state: State = State.NO_APPOINTMENT
         self.last_request: datetime = None
-        self.send_message_callback: Coroutine = None
         self.application: Application[BT, CCT, UD, CD, BD, JQ] = None
-        self.chat_ids = PersistedList("data/chat_ids.json")
-        self.chat_ids.load()
+        self.queue_manager = QueueManager(send_message_callback=self.send_message)
         self.admin_ids = PersistedList("data/admin_ids.json")
-        self.admin_ids.load()
         self.status_msgs: List[Message] = []
 
         self.logger = logging.getLogger(__name__)
 
     async def add_subscriber(self, chat_id: int):
-        if len(self.chat_ids.items) < 300:
-            self.chat_ids.append(chat_id)
-            return True
-        else:
-            await self.send_message_to_admins("Overflow error")
-        # msg = await self.application.bot.send_message(chat_id, self.state.name)
-        # self.status_msgs.append(msg)
+        await self.queue_manager.join_queue(chat_id)
 
     def perform_request_real(self):
         state = State.PENDING
@@ -62,9 +54,9 @@ class Requestor:
         try:
             self.response = requests.get(
                 "https://termine.staedteregion-aachen.de/auslaenderamt/suggest",
-                params=config.params,
-                cookies=config.cookies.data,
-                headers=config.headers,
+                params=config.PARAMS,
+                cookies=config.COOKIES.data,
+                headers=config.HEADERS,
                 timeout=config.PERIOD / 2.0,
             )
         except requests.exceptions.Timeout:
@@ -82,6 +74,8 @@ class Requestor:
 
         with open("data/response.html", "w") as f:
             f.write(self.response.text)
+            tz = pytz.timezone("Europe/Berlin")
+            self.last_request = datetime.now(tz)
 
         no_appointment_text = "Kein freier Termin verfügbar"
         error_text = "Es ist ein Fehler aufgetreten"
@@ -105,7 +99,7 @@ class Requestor:
             else State.NO_APPOINTMENT
         )
 
-    async def send_message(self, chat_id, text):
+    async def send_message(self, chat_id: int, text: str):
         times = 3
         exc = None
         for time in range(times):
@@ -115,7 +109,7 @@ class Requestor:
                 await self.application.bot.send_message(chat_id, text)
                 return
             except error.Forbidden:
-                self.chat_ids.remove(chat_id)
+                self.queue_manager.quit_queue(chat_id)
                 self.logger.info(f"Removed chat_id {chat_id} from chat_ids.json")
                 return
             except Exception as e:
@@ -127,16 +121,11 @@ class Requestor:
             asyncio.create_task(self.send_message(id, text))
 
     async def update_status_messages(self, state):
-        # for msg in self.status_msgs:
-        #     asyncio.create_task(msg.edit_text(self.state.name))
-        for id in self.chat_ids.items:
+        for id in self.queue_manager.serving_list.items:
             asyncio.create_task(self.send_message(id, STATE_TO_MSG[state]))
 
     async def execute(self):
         state = self.perform_request_real()
-
-        tz = pytz.timezone("Europe/Berlin")
-        self.last_request = datetime.now(tz)
 
         if state == State.PENDING:
             await self.send_message_to_admins(

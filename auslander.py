@@ -56,7 +56,7 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             chat_id=update.effective_chat.id, text=donate_text
         )
     elif update.message.text == unsubscribe_button.text:
-        REQUESTOR.chat_ids.remove(update.effective_chat.id)
+        REQUESTOR.queue_manager.quit_queue(update.effective_chat.id)
         await context.bot.send_message(
             chat_id=update.effective_chat.id, text="You were unsubscribed!"
         )
@@ -65,12 +65,12 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             chat_id=update.effective_chat.id, text="Hey admin!"
         )
         REQUESTOR.admin_ids.append(update.effective_chat.id)
-        with open("response.html", "rb") as f:
+        with open("data/response.html", "rb") as f:
             await context.bot.send_document(update.effective_chat.id, f)
     elif update.message.text.startswith("cookie"):
         session = update.message.text.split()[1]
-        config.cookies.data["TVWebSession"] = session
-        config.cookies.save()
+        config.COOKIES.data["TVWebSession"] = session
+        config.COOKIES.save()
         await context.bot.send_message(
             chat_id=update.effective_chat.id, text=f"Cookie set! {session}"
         )
@@ -81,8 +81,8 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(config.token).build()
-    application.add_error_handler(error_handler)
+    application = ApplicationBuilder().token(config.TOKEN).build()
+    # application.add_error_handler(error_handler)
     REQUESTOR.application = application
     start_handler = CommandHandler("start", start)
     last_handler = CommandHandler("last", get_last)
@@ -91,5 +91,6 @@ if __name__ == "__main__":
     application.add_handler(last_handler)
     application.add_handler(msg_handler)
     loop = asyncio.get_event_loop()
+    loop.create_task(REQUESTOR.queue_manager.process_queue())
     loop.create_task(REQUESTOR.execute())
     application.run_polling()
