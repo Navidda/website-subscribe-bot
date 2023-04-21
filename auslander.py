@@ -35,13 +35,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[subscribe_button, donate_button, unsubscribe_button]]
     reply_markup = t.ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
-    await REQUESTOR.add_subscriber(update.effective_chat.id)
-
-
-async def get_last(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id, text=REQUESTOR.last_request.strftime("%c")
-    )
 
 
 async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -67,7 +60,10 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         REQUESTOR.admin_ids.append(update.effective_chat.id)
         with open("data/response.html", "rb") as f:
             await context.bot.send_document(update.effective_chat.id, f)
-    elif update.message.text.startswith("cookie"):
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id, text=REQUESTOR.last_request.strftime("%c")
+        )
+    elif update.message.text.lower().startswith("cookie"):
         session = update.message.text.split()[1]
         config.COOKIES.data["TVWebSession"] = session
         config.COOKIES.save()
@@ -85,10 +81,8 @@ if __name__ == "__main__":
     # application.add_error_handler(error_handler)
     REQUESTOR.application = application
     start_handler = CommandHandler("start", start)
-    last_handler = CommandHandler("last", get_last)
     msg_handler = MessageHandler(tt.filters.TEXT, new_message)
     application.add_handler(start_handler)
-    application.add_handler(last_handler)
     application.add_handler(msg_handler)
     loop = asyncio.get_event_loop()
     loop.create_task(REQUESTOR.queue_manager.process_queue())
