@@ -31,7 +31,15 @@ HEADERS = {
     "sec-ch-ua-platform": '"Windows"',
 }
 
+PAYLOAD = {
+    "loc": "28",
+    "gps_lat": "50.77858",
+    "gps_long": "6.07867",
+    "select_location": "Ausländeramt Aachen - Außenstelle RWTH auswählen",
+}
+
 PARAMS = {
+    "select_cnc": "1",
     "cnc-191": "1",
     "loc": "28",
 }
