@@ -53,7 +53,7 @@ class Requestor:
         # timeout 5 seconds
         try:
             self.response = requests.post(
-                "https://termine.staedteregion-aachen.de/auslaenderamt/suggest",
+                config.URL,
                 params=config.PARAMS,
                 cookies=config.COOKIES.data,
                 headers=config.HEADERS,

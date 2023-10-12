@@ -7,8 +7,8 @@ from utils import PersistableDict
 TOKEN = os.getenv("BOT_TOKEN")
 
 DEFAULT_COOKIES = {
-    "cookie_accept": "1",
-    "TVWebSession": "k08eg9ntk7pcki3hd293b0ucj0",
+    "tvo_cookie_accept": "1",
+    "tvo_session": "k08eg9ntk7pcki3hd293b0ucj0",
 }
 
 COOKIES = PersistableDict("data/cookies.json", DEFAULT_COOKIES)
@@ -41,10 +41,12 @@ PAYLOAD = {
 PARAMS = {
     "select_cnc": "1",
     "cnc-191": "1",
-    "loc": "28",
+    "mdt": "77"
 }
 
 PERIOD = 10  # seconds
+
+URL = "https://termine.staedteregion-aachen.de/auslaenderamt/suggest"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
