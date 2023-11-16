@@ -16,6 +16,10 @@ from queuing import QueueManager
 from utils import PersistedList
 
 
+class Path(str):
+    pass
+
+
 class State(Enum):
     NO_APPOINTMENT = auto()
     PENDING = auto()
@@ -36,11 +40,13 @@ class Requestor:
     def __init__(self):
         self.response = requests.Response
         self.state: State = State.NO_APPOINTMENT
-        self.last_request: datetime = None
+        self.last_request_time: datetime = None
+        self.last_response_time: datetime = None
         self.application: Application[BT, CCT, UD, CD, BD, JQ] = None
         self.queue_manager = QueueManager(send_message_callback=self.send_message)
         self.admin_ids = PersistedList("data/admin_ids.json")
         self.status_msgs: List[Message] = []
+        self.debug: bool = False
 
         self.logger = logging.getLogger(__name__)
 
@@ -49,6 +55,9 @@ class Requestor:
 
     def perform_request_real(self):
         state = State.PENDING
+
+        tz = pytz.timezone("Europe/Berlin")
+        self.last_request_time = datetime.now(tz)
 
         # timeout 5 seconds
         try:
@@ -75,8 +84,7 @@ class Requestor:
 
         with open("data/response.html", "w") as f:
             f.write(self.response.text)
-            tz = pytz.timezone("Europe/Berlin")
-            self.last_request = datetime.now(tz)
+            self.last_response_time = self.last_request_time
 
         no_appointment_text = "Kein freier Termin verfügbar"
         error_text = "Es ist ein Fehler aufgetreten"
@@ -107,7 +115,11 @@ class Requestor:
             if time:
                 print("times:", time + 1)
             try:
-                await self.application.bot.send_message(chat_id, text)
+                if isinstance(text, Path):
+                    with open(text, "rb") as f:
+                        await self.application.bot.send_document(chat_id, f)
+                else:
+                    await self.application.bot.send_message(chat_id, text)
                 return
             except error.Forbidden:
                 self.queue_manager.quit_queue(chat_id)
@@ -129,9 +141,16 @@ class Requestor:
         state = self.perform_request_real()
 
         if state == State.PENDING:
-            await self.send_message_to_admins(
-                f"Request Error! Last Request: {self.last_request}"
-            )
+            if self.last_request_time == self.last_response_time:
+                await self.send_message_to_admins(
+                    "Cannot parse response or error code!"
+                )
+                if self.debug:
+                    await self.send_message_to_admins(Path("data/response.html"))
+            else:
+                await self.send_message_to_admins(
+                    f"Request Error! Last successful request: {self.last_response_time}"
+                )
         elif state != self.state:
             await self.update_status_messages(state)
             self.state = state

@@ -61,7 +61,8 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         with open("data/response.html", "rb") as f:
             await context.bot.send_document(update.effective_chat.id, f)
         await context.bot.send_message(
-            chat_id=update.effective_chat.id, text=REQUESTOR.last_request.strftime("%c")
+            chat_id=update.effective_chat.id,
+            text=REQUESTOR.last_response_time.strftime("%c"),
         )
     elif update.message.text.lower().startswith("cookie"):
         session = update.message.text.split()[1]
@@ -69,6 +70,16 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         config.COOKIES.save()
         await context.bot.send_message(
             chat_id=update.effective_chat.id, text=f"Cookie set! {session}"
+        )
+    elif update.message.text.lower() == "debug":
+        REQUESTOR.debug = True
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id, text="Debug mode enabled!"
+        )
+    elif update.message.text.lower() == "nodebug":
+        REQUESTOR.debug = False
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id, text="Debug mode disabled!"
         )
 
 
