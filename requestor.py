@@ -61,13 +61,11 @@ class Requestor:
 
         # timeout 5 seconds
         try:
-            self.response = requests.post(
+            self.response = requests.get(
                 config.URL,
-                params=config.PARAMS,
                 cookies=config.COOKIES.data,
                 headers=config.HEADERS,
                 timeout=config.PERIOD / 2.0,
-                data=config.PAYLOAD,
             )
         except requests.exceptions.Timeout:
             self.logger.info("Request Timeout!")
