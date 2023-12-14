@@ -61,10 +61,17 @@ class Requestor:
 
         # timeout 5 seconds
         try:
+            self.response = requests.post(
+                config.Loc_URL,
+                cookies=config.COOKIES.data,
+                headers=config.HEADERS1,
+                timeout=config.PERIOD / 2.0,
+                data=config.FORM_DATA1
+            )
             self.response = requests.get(
                 config.URL,
                 cookies=config.COOKIES.data,
-                headers=config.HEADERS,
+                headers=config.HEADERS2,
                 timeout=config.PERIOD / 2.0,
             )
         except requests.exceptions.Timeout:
