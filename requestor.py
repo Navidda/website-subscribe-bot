@@ -148,6 +148,10 @@ class Requestor:
     async def execute(self):
         state = self.perform_request_real()
 
+        if state == State.FREE_APPOINTMENT:
+            await self.send_message_to_admins("Admin, new slots!")
+            await self.send_message_to_admins(Path("data/response.html"))
+
         if state == State.PENDING:
             if self.last_request_time == self.last_response_time:
                 await self.send_message_to_admins(
