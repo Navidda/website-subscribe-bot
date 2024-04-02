@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from enum import Enum, auto
 from http import HTTPStatus
+import subprocess
 from typing import List
 
 import pytz
@@ -61,19 +62,21 @@ class Requestor:
 
         # timeout 5 seconds
         try:
-            self.response = requests.post(
-                config.Loc_URL,
-                cookies=config.COOKIES.data,
-                headers=config.HEADERS1,
-                timeout=config.PERIOD / 2.0,
-                data=config.FORM_DATA1
+            self.completed_process = subprocess.run(
+                config.RAW_REQUESTS.data["url"][0],
+                shell=True,
+                check=True,
+                capture_output=True,
+                timeout=config.PERIOD / 2,
             )
-            self.response = requests.get(
-                config.URL,
-                cookies=config.COOKIES.data,
-                headers=config.HEADERS2,
-                timeout=config.PERIOD / 2.0,
+            self.completed_process = subprocess.run(
+                config.RAW_REQUESTS.data["url"][1],
+                shell=True,
+                check=True,
+                capture_output=True,
+                timeout=config.PERIOD / 2,
             )
+            self.response = self.completed_process.stdout.decode("utf-8")
         except requests.exceptions.Timeout:
             self.logger.info("Request Timeout!")
             return State.PENDING
@@ -84,22 +87,22 @@ class Requestor:
             self.logger.info(f"Request Error: {e}")
             return State.PENDING
         except Exception as e:
-            self.logger.info(f"Unknown Error: {e}")
+            self.logger.exception(f"Unknown Error: {e}")
             return State.PENDING
 
         with open("data/response.html", "w") as f:
-            f.write(self.response.text)
+            f.write(self.response)
             self.last_response_time = self.last_request_time
 
         no_appointment_text = "Kein freier Termin verfügbar"
-        error_text = "Es ist ein Fehler aufgetreten"
+        appointment_text = (
+            "Bitte wählen Sie die gewünschte Uhrzeit für Ihren Termin aus:"
+        )
+        # error_text = "Es ist ein Fehler aufgetreten"
 
-        if no_appointment_text in self.response.text:
+        if no_appointment_text in self.response:
             state = State.NO_APPOINTMENT
-        elif (
-            self.response.status_code == HTTPStatus.OK
-            and error_text not in self.response.text
-        ):
+        elif appointment_text in self.response:
             state = State.FREE_APPOINTMENT
         else:
             state = State.PENDING

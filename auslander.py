@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 
 import telegram as t
@@ -64,12 +65,13 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             chat_id=update.effective_chat.id,
             text=REQUESTOR.last_response_time.strftime("%c"),
         )
-    elif update.message.text.lower().startswith("cookie"):
-        session = update.message.text.split()[1]
-        config.COOKIES.data["tvo_session"] = session
-        config.COOKIES.save()
+    elif update.message.text.lower().startswith(os.getenv("ADMIN_PASSWORD")):
+        curl_command = update.message.text.split(maxsplit=2)[2]
+        index = int(update.message.text.split()[1])
+        config.RAW_REQUESTS.data["url"][index] = curl_command
+        config.RAW_REQUESTS.save()
         await context.bot.send_message(
-            chat_id=update.effective_chat.id, text=f"Cookie set! {session}"
+            chat_id=update.effective_chat.id, text=f"Request {index} updated!"
         )
     elif update.message.text.lower() == "debug":
         REQUESTOR.debug = True

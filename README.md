@@ -15,6 +15,7 @@ This is implemented to monitor Aachen immigration office.
 
 
        echo "BOT_TOKEN=Your Token Here" > .env
+       echo "ADMIN_PASSWORD=YourAdminPassword" >> .env # This is used to authenticate admin commands
 
 
 3. Run the bot
