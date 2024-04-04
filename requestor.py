@@ -148,6 +148,7 @@ class Requestor:
     async def execute(self):
         state = self.perform_request_real()
         if state != self.state:
+            self.state = state
             if state == State.FREE_APPOINTMENT:
                 await self.send_message_to_admins("Admin, new slots!")
                 await self.send_message_to_admins(Path("data/response.html"))
@@ -163,7 +164,6 @@ class Requestor:
                     )
             if state != State.PENDING:
                 await self.update_status_messages(state)
-                self.state = state
 
         await asyncio.sleep(config.PERIOD)
         asyncio.create_task(self.execute())
