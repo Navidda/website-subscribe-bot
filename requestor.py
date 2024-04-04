@@ -147,25 +147,23 @@ class Requestor:
 
     async def execute(self):
         state = self.perform_request_real()
-
-        if state == State.FREE_APPOINTMENT:
-            await self.send_message_to_admins("Admin, new slots!")
-            await self.send_message_to_admins(Path("data/response.html"))
-
-        if state == State.PENDING:
-            if self.last_request_time == self.last_response_time:
-                await self.send_message_to_admins(
-                    "Cannot parse response or error code!"
-                )
-                if self.debug:
+        if state != self.state:
+            if state == State.FREE_APPOINTMENT:
+                await self.send_message_to_admins("Admin, new slots!")
+                await self.send_message_to_admins(Path("data/response.html"))
+            if state == State.PENDING:
+                if self.last_request_time == self.last_response_time:
+                    await self.send_message_to_admins(
+                        "Cannot parse response or error code!"
+                    )
                     await self.send_message_to_admins(Path("data/response.html"))
-            else:
-                await self.send_message_to_admins(
-                    f"Request Error! Last successful request: {self.last_response_time}"
-                )
-        elif state != self.state:
-            await self.update_status_messages(state)
-            self.state = state
+                else:
+                    await self.send_message_to_admins(
+                        f"Request Error! Last successful request: {self.last_response_time}"
+                    )
+            if state != State.PENDING:
+                await self.update_status_messages(state)
+                self.state = state
 
         await asyncio.sleep(config.PERIOD)
         asyncio.create_task(self.execute())
