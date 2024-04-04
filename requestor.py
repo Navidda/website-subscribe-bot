@@ -148,6 +148,7 @@ class Requestor:
     async def execute(self):
         state = self.perform_request_real()
         if state != self.state:
+            previous_state = self.state
             self.state = state
             if state == State.FREE_APPOINTMENT:
                 await self.send_message_to_admins("Admin, new slots!")
@@ -162,7 +163,7 @@ class Requestor:
                     await self.send_message_to_admins(
                         f"Request Error! Last successful request: {self.last_response_time}"
                     )
-            if state != State.PENDING:
+            if state != State.PENDING and previous_state == State.PENDING:
                 await self.update_status_messages(state)
 
         await asyncio.sleep(config.PERIOD)
