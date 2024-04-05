@@ -41,6 +41,7 @@ class Requestor:
     def __init__(self):
         self.response = requests.Response
         self.state: State = State.NO_APPOINTMENT
+        self.pending: bool = False
         self.last_request_time: datetime = None
         self.last_response_time: datetime = None
         self.application: Application[BT, CCT, UD, CD, BD, JQ] = None
@@ -147,24 +148,25 @@ class Requestor:
 
     async def execute(self):
         state = self.perform_request_real()
-        if state != self.state:
-            previous_state = self.state
-            self.state = state
+        if state == State.PENDING and not self.pending:
+            if self.last_request_time == self.last_response_time:
+                await self.send_message_to_admins(
+                    "Cannot parse response or error code!"
+                )
+                await self.send_message_to_admins(Path("data/response.html"))
+            else:
+                await self.send_message_to_admins(
+                    f"Request Error! Last successful request: {self.last_response_time}"
+                )
+            self.pending = True
+        elif state != self.state:
             if state == State.FREE_APPOINTMENT:
                 await self.send_message_to_admins("Admin, new slots!")
                 await self.send_message_to_admins(Path("data/response.html"))
-            if state == State.PENDING:
-                if self.last_request_time == self.last_response_time:
-                    await self.send_message_to_admins(
-                        "Cannot parse response or error code!"
-                    )
-                    await self.send_message_to_admins(Path("data/response.html"))
-                else:
-                    await self.send_message_to_admins(
-                        f"Request Error! Last successful request: {self.last_response_time}"
-                    )
-            if state != State.PENDING and previous_state == State.PENDING:
+            if state != State.PENDING:
+                self.pending = False
                 await self.update_status_messages(state)
+            self.state = state
 
         await asyncio.sleep(config.PERIOD)
         asyncio.create_task(self.execute())
