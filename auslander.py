@@ -28,7 +28,7 @@ Welcome to auslander bot!
 I will check every 30 seconds and if I find a new appointment I will tell you!
 """
 donate_text = """
-Buy me a coffee! paypal.me/navidda
+https://buymeacoffee.com/navidda
 """
 
 
