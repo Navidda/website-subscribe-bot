@@ -39,7 +39,7 @@ STATE_TO_MSG = {
 
 class Requestor:
     def __init__(self):
-        self.response = requests.Response
+        self.response: requests.Response = None
         self.state: State = State.NO_APPOINTMENT
         self.pending: bool = False
         self.last_request_time: datetime = None
@@ -61,23 +61,18 @@ class Requestor:
         tz = pytz.timezone("Europe/Berlin")
         self.last_request_time = datetime.now(tz)
 
-        # timeout 5 seconds
         try:
-            self.completed_process = subprocess.run(
-                config.RAW_REQUESTS.data["url"][0],
-                shell=True,
-                check=True,
-                capture_output=True,
-                timeout=config.PERIOD / 2,
-            )
-            self.completed_process = subprocess.run(
-                config.RAW_REQUESTS.data["url"][1],
-                shell=True,
-                check=True,
-                capture_output=True,
-                timeout=config.PERIOD / 2,
-            )
-            self.response = self.completed_process.stdout.decode("utf-8")
+            for i in range(10):
+                if not config.RAW_REQUESTS.data["url"][i]:
+                    continue
+                self.completed_process = subprocess.run(
+                    config.RAW_REQUESTS.data["url"][i],
+                    shell=True,
+                    check=True,
+                    capture_output=True,
+                    timeout=config.PERIOD / 2, # timeout 5 seconds
+                )
+                self.response = self.completed_process.stdout.decode("utf-8")
         except requests.exceptions.Timeout:
             self.logger.info("Request Timeout!")
             return State.PENDING
@@ -91,19 +86,17 @@ class Requestor:
             self.logger.exception(f"Unknown Error: {e}")
             return State.PENDING
 
-        with open("data/response.html", "w") as f:
-            f.write(self.response)
-            self.last_response_time = self.last_request_time
+        if not self.response:
+            self.logger.info("Empty response!")
+            return State.PENDING
+        else:
+            with open("data/response.html", "w") as f:
+                f.write(self.response)
+                self.last_response_time = self.last_request_time
 
-        no_appointment_text = "Kein freier Termin verfügbar"
-        appointment_text = (
-            "Bitte wählen Sie die gewünschte Uhrzeit für Ihren Termin aus:"
-        )
-        # error_text = "Es ist ein Fehler aufgetreten"
-
-        if no_appointment_text in self.response:
+        if config.NO_APPOINTMENT_TEXT in self.response:
             state = State.NO_APPOINTMENT
-        elif appointment_text in self.response:
+        elif config.APPOINTMENT_TEXT in self.response:
             state = State.FREE_APPOINTMENT
         else:
             state = State.PENDING

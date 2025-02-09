@@ -59,12 +59,17 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             chat_id=update.effective_chat.id, text="Hey admin!"
         )
         REQUESTOR.admin_ids.append(update.effective_chat.id)
-        with open("data/response.html", "rb") as f:
-            await context.bot.send_document(update.effective_chat.id, f)
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=REQUESTOR.last_response_time.strftime("%c"),
-        )
+        if not os.path.exists("data/response.html"):
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text="No response yet!"
+            )
+        else:
+            with open("data/response.html", "rb") as f:
+                await context.bot.send_document(update.effective_chat.id, f)
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=REQUESTOR.last_response_time.strftime("%c"),
+            )
     elif update.message.text.lower().startswith(os.getenv("ADMIN_PASSWORD")):
         curl_command = update.message.text.split(maxsplit=2)[2]
         index = int(update.message.text.split()[1])

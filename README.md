@@ -16,6 +16,8 @@ This is implemented to monitor Aachen immigration office.
 
        echo "BOT_TOKEN=Your Token Here" > .env
        echo "ADMIN_PASSWORD=YourAdminPassword" >> .env # This is used to authenticate admin commands
+       echo "NO_APPOINTMENT_TEXT=No appointment available" >> .env
+       echo "APPOINTMENT_TEXT=Appointment available" >> .env
 
 
 3. Run the bot
