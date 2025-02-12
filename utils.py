@@ -43,8 +43,9 @@ class PersistedList:
 
 class PersistableDict:
     """A dict that persists to a file"""
+    data: dict
 
-    def __init__(self, filename, default_value=None):
+    def __init__(self, filename, default_value: dict):
         self.filename = filename
         self.data = {}
         self.load()
@@ -62,7 +63,7 @@ class PersistableDict:
     def load(self):
         try:
             with open(self.filename, "r") as f:
-                self.data = json.load(f)
+                self.data = dict(json.load(f))
         except FileNotFoundError:
             pass
 

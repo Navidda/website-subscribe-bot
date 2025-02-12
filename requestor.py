@@ -2,9 +2,9 @@ import asyncio
 import logging
 from datetime import datetime
 from enum import Enum, auto
-from http import HTTPStatus
+import re
 import subprocess
-from typing import List
+from typing import List, Optional
 
 import pytz
 import requests
@@ -39,11 +39,11 @@ STATE_TO_MSG = {
 
 class Requestor:
     def __init__(self):
-        self.response: requests.Response = None
+        self.response: str = ""
         self.state: State = State.NO_APPOINTMENT
         self.pending: bool = False
-        self.last_request_time: datetime = None
-        self.last_response_time: datetime = None
+        self.last_request_time: Optional[datetime] = None
+        self.last_response_time: Optional[datetime] = None
         self.application: Application[BT, CCT, UD, CD, BD, JQ] = None
         self.queue_manager = QueueManager(send_message_callback=self.send_message)
         self.admin_ids = PersistedList("data/admin_ids.json")
@@ -62,7 +62,7 @@ class Requestor:
         self.last_request_time = datetime.now(tz)
 
         try:
-            for i in range(10):
+            for i in range(len(config.RAW_REQUESTS.data["url"])):
                 if not config.RAW_REQUESTS.data["url"][i]:
                     continue
                 self.completed_process = subprocess.run(
@@ -94,12 +94,15 @@ class Requestor:
                 f.write(self.response)
                 self.last_response_time = self.last_request_time
 
-        if config.NO_APPOINTMENT_TEXT in self.response:
+        no_appointment_pattern = re.compile(config.NO_APPOINTMENT_TEXT, re.IGNORECASE)
+        appointment_pattern = re.compile(config.APPOINTMENT_TEXT, re.IGNORECASE)
+
+        if re.search(no_appointment_pattern, self.response):
             state = State.NO_APPOINTMENT
-        elif config.APPOINTMENT_TEXT in self.response:
-            state = State.FREE_APPOINTMENT
+        # elif re.search(appointment_pattern, self.response):
         else:
-            state = State.PENDING
+            state = State.FREE_APPOINTMENT
+            # state = State.PENDING
 
         return state
 
