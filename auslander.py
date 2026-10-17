@@ -23,9 +23,11 @@ REQUESTOR = Requestor()
 subscribe_button = t.KeyboardButton("Subscribe")
 donate_button = t.KeyboardButton("Donate")
 unsubscribe_button = t.KeyboardButton("Unsubscribe")
-welcome_message = """
+welcome_message = f"""
 Welcome to auslander bot!
-I will check every 30 seconds and if I find a new appointment I will tell you!
+I check the Aachen Ausländeramt (Beratungs- und Antragsservice, Aachen Arkaden)
+every {config.PERIOD} seconds and tell you when an appointment within the next
+{config.MAX_WAIT_DAYS} days shows up!
 """
 donate_text = """
 https://buymeacoffee.com/navidda
@@ -68,16 +70,8 @@ async def new_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 await context.bot.send_document(update.effective_chat.id, f)
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=REQUESTOR.last_response_time.strftime("%c"),
+                text=f"{REQUESTOR.last_response_time:%c}\nEarliest slot: {REQUESTOR.earliest}",
             )
-    elif update.message.text.lower().startswith(os.getenv("ADMIN_PASSWORD")):
-        curl_command = update.message.text.split(maxsplit=2)[2]
-        index = int(update.message.text.split()[1])
-        config.RAW_REQUESTS.data["url"][index] = curl_command
-        config.RAW_REQUESTS.save()
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id, text=f"Request {index} updated!"
-        )
     elif update.message.text.lower() == "debug":
         REQUESTOR.debug = True
         await context.bot.send_message(
