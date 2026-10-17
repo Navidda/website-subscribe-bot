@@ -1,16 +1,20 @@
 import logging
 import os
 
-from utils import PersistableDict
-
 TOKEN = os.getenv("BOT_TOKEN")
 
-PERIOD = 10  # seconds
+PERIOD = int(os.getenv("PERIOD", "60"))  # seconds between checks
 
-DEFAULT_RAW_REQUESTS = {"url": [""] * 10}
-NO_APPOINTMENT_TEXT = os.environ["NO_APPOINTMENT_PATTERN"]
-APPOINTMENT_TEXT = os.environ["APPOINTMENT_PATTERN"]
-RAW_REQUESTS = PersistableDict("data/raw_requests.json", DEFAULT_RAW_REQUESTS)
+# TEVIS booking flow for StädteRegion Aachen, Ausländeramt Aachen Arkaden,
+# "Beratungs- und Antragsservice".
+BASE_URL = os.getenv("BASE_URL", "https://termine.staedteregion-aachen.de/auslaenderamt")
+BOOKING_URL = f"{BASE_URL}/select2?md=1"
+MANDATOR = os.getenv("MANDATOR", "95")
+CONCERN = os.getenv("CONCERN", "341")
+LOCATION = os.getenv("LOCATION", "49")
+
+# A slot counts as "free" if it is within this many days from now.
+MAX_WAIT_DAYS = int(os.getenv("MAX_WAIT_DAYS", "30"))
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
